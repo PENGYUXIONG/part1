@@ -13,6 +13,8 @@ def connect(path):
         # TODO: Create and populate table is the database using 'init.sql' (from eclass)
 
         cursor.execute(' PRAGMA forteign_keys=ON; ')
+        sqlcommand = open("a2-data.sql").read()
+        cursor.executescript(sqlcommand)
         connection.commit()
 
         return
@@ -70,4 +72,3 @@ def main():
 
 if __name__ == "__main__":
         main()
-
