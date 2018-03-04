@@ -93,32 +93,27 @@ def dispatcher(user_id):
   return
 
 def driver(user_id):
-    print('''
-        1: location where to exchange containers\n
-        2: local contact information for the service agreement\n
-        3: waste_type involved in the service agreement\n
-        4: container ID of the container to be dropped off\n
-        5: container ID of the container to be picked up, local_contact ''')
-    option = input()
-    Date_Range = '+' + input("Please input the date range:") + ' day'
-    if (option == "1"):
-        cursor.execute('''SELECT DISTINCT sa.location
-                        FROM service_agreements sa, service_fulfillments sf
-                        WHERE sa.master_account = sf.master_account
-                        and
-                        sa.service_no = sf.service_no
-                        and
-                        date('now') < sf.date_time
-                        and
-                         sf.date_time < date('now', :range)
-                        and
-                        driver_id = :id''', {"id":user_id, "range":Date_Range})
-        locations = cursor.fetchall()
-        print("LOCATION:")
-        for location in locations:
-            print(location[0])
-    if (option == "2"):
-        cursor.execute()
+    Date_Range = '+' + input("Please input the date range (an int number):") + ' day'
+    cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
+                    sf.cid_drop_off, sf.cid_pick_up
+                    FROM service_agreements sa, service_fulfillments sf
+                    WHERE sa.master_account = sf.master_account
+                    and
+                    sa.service_no = sf.service_no
+                    and
+                    date('now') < sf.date_time
+                    and
+                     sf.date_time < date('now', :range)
+                    and
+                    sf.driver_id = :id''', {"id":user_id, "range":Date_Range})
+    informations = cursor.fetchall()
+    for inf in informations:
+        # print information
+        print("\n" + "Location: " + inf[0])
+        print("contact information: " + inf[1])
+        print("waste type: " + inf[2])
+        print("drop_off container id: " + inf[3])
+        print("pick_up container_id: " + inf[4])
     return
 
 def login():
