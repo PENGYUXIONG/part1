@@ -112,7 +112,11 @@ def supervisor(user_id):
       print(query[i][0])
     customerSummaryReport()
   elif(option == 3):
-    return
+    cursor.execute("Select name,count(service_no), sum(internal_cost) as c, sum(price) as p from service_agreements, accounts, personnel where (master_account  = account_no) and (account_mgr = pid) and (supervisor_pid = :user_id) group by name order by (p-c)",{"user_id":user_id})     
+    query = cursor.fetchall()
+    for i in range(0,len(query)):
+      print("\nAccount Manager: "+query[i][0]+"\nTotal Number of Service Agreements: "+str(query[i][1])+"\nSum of prices: $"+str(query[i][2])+"\nSum of internal costs: $"+str(query[i][3])+"\n")
+  
   elif(option == 4):
     main()
   elif(option == 0):
