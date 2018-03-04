@@ -33,10 +33,14 @@ def createMasterAccount(manager):
 
 def customerSummaryReport():
   customer = input("Enter the name of the customer (case sensitive): ")
-  cursor.execute("Select account_no from accounts where customer_name = ?",customer)
+  cursor.execute("Select account_no from accounts where customer_name = :customer",{"customer":customer})
   account_no = cursor.fetchone()[0]
-  cursor.execute("Select max(service_no) from service_agreements where master_account = ?",account_no)
-  service_no = cursor.fetchone()[0] + 1
+  cursor.execute("Select max(service_no) from service_agreements where master_account = :account_no",{"account_no":account_no}) 
+  service_no = cursor.fetchone()[0]
+  if(service_no == None):
+    service_no = 1
+  else:
+    service_no += 1
   location = input("Enter location: ")
   waste = input("Enter waste type: ")
   pick_up = input("Enter pick up schedule: ")
@@ -102,11 +106,11 @@ def supervisor(user_id):
     manager = cursor.fetchone()[0]
     createMasterAccount(manager)
   elif(option == 2):
-    cursor.execute("Select customer_name from accounts, personnel where account_mgr = pid and supervisor_pid = ?",user_id)
+    cursor.execute("Select customer_name from accounts, personnel where account_mgr = pid and supervisor_pid = :user_id",{"user_id":user_id})
     query = cursor.fetchall()
     for i in range(0,len(query)):
       print(query[i][0])
-    customerServiceReport()
+    customerSummaryReport()
   elif(option == 3):
     return
   elif(option == 4):
