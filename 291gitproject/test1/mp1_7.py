@@ -29,15 +29,15 @@ def accountManager(user_id):
       print(i[0]+" "+i[1])
     customer = input("Enter the account number of the customer: ")
     cursor.execute("Select * from accounts where account_no =:customer",{"customer":customer})
-    query = cursor.fetchone() 
-    print("\nAccount No.: "+str(query[0])+"\nAccount Mgr.: "+str(query[1])+"\nName: "+str(query[2])+"\nContact Info.: "+str(query[3])+"\nCustomer Type: "+str(query[4])+"\nStart Date: "+str(query[5])+"\nEnd Date: "+str(query[6])+"\nTotal Amount: $"+str(query[7]))  
+    query = cursor.fetchone()
+    print("\nAccount No.: "+str(query[0])+"\nAccount Mgr.: "+str(query[1])+"\nName: "+str(query[2])+"\nContact Info.: "+str(query[3])+"\nCustomer Type: "+str(query[4])+"\nStart Date: "+str(query[5])+"\nEnd Date: "+str(query[6])+"\nTotal Amount: $"+str(query[7]))
     cursor.execute("Select * from service_agreements where master_account =:customer order by service_no",{"customer":customer})
     query = cursor.fetchall()
     for i in query:
       print("\nService No.: "+i[0]+"\nMaster Account: "+i[1]+"\nLocation: "+i[2]+"\nWaste Type: "+i[3]+"\nPick Up Schedule: "+i[4]+"\nLocal Contact: "+i[5]+"\nInternal Cost: $"+str(i[6])+"\nPrice: $"+str(i[7]))
 
     print("\n1: Add new service agreement\n2: Create summary report for a single customer")
-    option = int(input()) 
+    option = int(input())
     if(option == 1):
       service_no = int(query[len(query)-1][0]) + 1
       location = input("Enter location: ")
@@ -93,31 +93,57 @@ def dispatcher(user_id):
   return
 
 def driver(user_id):
-  print("Tours:")
-  return
+    print('''
+        1: location where to exchange containers\n
+        2: local contact information for the service agreement\n
+        3: waste_type involved in the service agreement\n
+        4: container ID of the container to be dropped off\n
+        5: container ID of the container to be picked up, local_contact ''')
+    option = input()
+    Date_Range = '+' + input("Please input the date range:") + ' day'
+    if (option == "1"):
+        cursor.execute('''SELECT DISTINCT sa.location
+                        FROM service_agreements sa, service_fulfillments sf
+                        WHERE sa.master_account = sf.master_account
+                        and
+                        sa.service_no = sf.service_no
+                        and
+                        date('now') < sf.date_time
+                        and
+                         sf.date_time < date('now', :range)
+                        and
+                        driver_id = :id''', {"id":user_id, "range":Date_Range})
+        locations = cursor.fetchall()
+        print("LOCATION:")
+        for location in locations:
+            print(location[0])
+    if (option == "2"):
+        cursor.execute()
+    return
 
+def login():
+    login = input('Please enter the login: ')
+    cursor.execute('select user_id,role,login,password from users where login =:l',{'l':login})
+    id_role = cursor.fetchone()
+    if(id_role[1] == 'Account Manager'):
+      accountManager(id_role[0])
+    if(id_role[1] == 'Supervisor'):
+      supervisor(id_role[0])
+    if(id_role[1] == 'Dispatcher'):
+      dispatcher(id_role[0])
+    if(id_role[1] == 'Driver'):
+      driver(id_role[0])
+
+    return
 
 def main():
         global connection, cursor
 
         path="./mp1.db"
         connect(path)
-
-        login = input('Please enter the login: ')
-        cursor.execute('select user_id,role,login,password from users where login =:l',{'l':login})
-        id_role = cursor.fetchone()
-        if(id_role[1] == 'Account Manager'):
-          accountManager(id_role[0])
-        if(id_role[1] == 'Supervisor'):
-          supervisor(id_role[0])
-        if(id_role[1] == 'Dispatcher'):
-          dispatcher(id_role[0])
-        if(id_role[1] == 'Driver'):
-          driver(id_role[0])
-
+        login()
         return
 
 
 if __name__ == "__main__":
         main()
-
