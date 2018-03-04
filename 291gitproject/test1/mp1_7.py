@@ -1,4 +1,5 @@
 import sqlite3
+from sys import exit
 
 connection = None
 cursor = None
@@ -118,11 +119,86 @@ def driver(user_id):
         print("pick_up container_id: " + inf[4])
     return
 
+def validate_new_account():
+    user_pid = input(''' please enter the pid: \n (press m to back to main page)\n (press e to exit)\n''')
+    if user_pid == "m" or user_pid == "M":
+        main()
+    if user_pid == "e" or user_pid == "E":
+        exit()
+    cursor.execute('''
+                    SELECT pid
+                    FROM personnel
+                    WHERE pid = :uid
+                    ''', {'uid': user_pid})
+    user_id = cursor.fetchone()
+    if user_id == None:
+        print("invalid pid")
+        add_login_account()
+    cursor.execute('''
+                    SELECT user_id
+                    FROM users
+                    WHERE user_id = :uid'''
+                    , {'uid': user_pid})
+    user_id = cursor.fetchone()
+    if user_id != None:
+        print("Account already exist")
+        login()
+
+    role = input('''What is your role: \n 1. Account Manager \n 2. Driver \n (press e to exit)\n (press m to back to main page)\n''')
+    if role == 'm' or role == 'M':
+        main()
+    if role == 'e' or role == 'E':
+        exit()
+    if role == '1':
+        cursor.execute('''SELECT pid FROM account_managers WHERE pid = :user''', {'user': user_pid})
+        pid = cursor.fetchone()
+        if pid == None:
+            print("Role not correct, please sign up again\n")
+            add_login_account()
+        Role = "Account Manager"
+    if role == '2':
+        cursor.execute('''SELECT pid FROM drivers WHERE pid = :user''', {'user': user_pid})
+        pid = cursor.fetchone()
+        if pid == None:
+            print("Role not correct, please sign up again\n")
+            add_login_account()
+        Role = "Driver"
+    return user_pid, Role
+
+def login_check(user_pid, role):
+    newlogin = input("Create Login: ")
+    user = [user_pid, role, newlogin, 0]
+    cursor.execute("SELECT login FROM users WHERE login = :nl", {'nl': newlogin})
+    user_check = cursor.fetchone()
+    return user, user_check
+
+def add_login_account():
+    user_pid, role = validate_new_account()
+    user, user_check = login_check(user_pid, role)
+    while user_check != None:
+        print("login already exist!\n")
+        user, user_check = login_check(user_pid, role)
+    user[3] = input("Create password: ")
+    print(user)
+    cursor.execute('Insert into users values (?, ?, ?, ?);', user)
+    print("success!\n please log in with your Login and password")
+    login()
+    exit()
+    return
+
 def login():
     # login input
-    login = input('Please enter the login: ')
+    login = input('Please enter the login: \n (press e to exit)\n (press m back to main page)\n' )
+    if login == 'e' or login == 'E':
+        exit()
+    if login == 'm' or login == 'M':
+        main()
     # password input
-    password = input('please enter the password: ')
+    password = input('please enter the password: \n (press e to exit)\n (press m back to main page)\n')
+    if password == "e" or password == "E":
+        exit()
+    if password == "m" or password == "M":
+        mian()
     # find matched information
     cursor.execute('''select user_id,role,login,password
                     from users where login =:l and password = :pw''',
@@ -145,7 +221,17 @@ def main():
 
         path="./mp1.db"
         connect(path)
-        login()
+        option = input(" 1. log in \n 2. sign up\n (press e to exit)\n")
+        while option != 'e' or option != 'E':
+            if option == '1':
+                login()
+                exit()
+            if option == '2':
+                add_login_account()
+                exit()
+            if option == 'e' or option == 'E':
+                exit()
+            option = input("invalid key\n")
         return
 
 
