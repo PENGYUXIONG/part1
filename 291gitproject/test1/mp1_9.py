@@ -47,7 +47,7 @@ def customerSummaryReport(name):
                 for j in range(0,len(types[i])):
                         s.add(types[i][j])
         print("Total number of service agreements: "+str(count[0])+"\nSum of prices: $"+str(price[0])+"\nSum of costs: $"+str(cost[0])+"\nTypes: "+", ".join(s))
-        return        
+        return
 
 def accountManager(user_id):
         print("1: Select customer (master account)\n2: Create new master account\n3: Add new service agreement\n4: Create summary report for a single customer\n5: Logout\n0: Exit")
@@ -59,8 +59,8 @@ def accountManager(user_id):
                         print(i[0]+" "+i[1])
                 customer = input("Enter the account number of the customer: ")
                 cursor.execute("Select * from accounts where account_no =:customer",{"customer":customer})
-                query = cursor.fetchone() 
-                print("\nAccount No.: "+str(query[0])+"\nAccount Mgr.: "+str(query[1])+"\nName: "+str(query[2])+"\nContact Info.: "+str(query[3])+"\nCustomer Type: "+str(query[4])+"\nStart Date: "+str(query[5])+"\nEnd Date: "+str(query[6])+"\nTotal Amount: $"+str(query[7]))  
+                query = cursor.fetchone()
+                print("\nAccount No.: "+str(query[0])+"\nAccount Mgr.: "+str(query[1])+"\nName: "+str(query[2])+"\nContact Info.: "+str(query[3])+"\nCustomer Type: "+str(query[4])+"\nStart Date: "+str(query[5])+"\nEnd Date: "+str(query[6])+"\nTotal Amount: $"+str(query[7]))
                 cursor.execute("Select * from service_agreements where master_account =:customer order by service_no",{"customer":customer})
                 query = cursor.fetchall()
                 for i in query:
@@ -73,7 +73,7 @@ def accountManager(user_id):
                 customer = input("Enter the name of the customer (case sensitive): ")
                 cursor.execute("Select account_no from accounts where customer_name = :customer",{"customer":customer})
                 account_no = cursor.fetchone()[0]
-                cursor.execute("Select max(service_no) from service_agreements where master_account = :account_no",{"account_no":account_no}) 
+                cursor.execute("Select max(service_no) from service_agreements where master_account = :account_no",{"account_no":account_no})
                 service_no = cursor.fetchone()[0]
                 if(service_no == None):
                         service_no = 1
@@ -85,14 +85,14 @@ def accountManager(user_id):
                 contact = input("Enter local contact: ")
                 cost = float(input("Enter internal cost"))
                 price = float(input("Enter price: "))
-                cursor.execute("Insert into service_agreements values (?,?,?,?,?,?,?,?);",service_no,account_no,location,waste,pick_up,contact,cost,price)            
+                cursor.execute("Insert into service_agreements values (?,?,?,?,?,?,?,?);",service_no,account_no,location,waste,pick_up,contact,cost,price)
 
         elif(option == 4):
                 name = input("Enter the name of the customer (case sensitive): ")
                 customerSummaryReport(name)
 
 
-        elif(option == 5):    
+        elif(option == 5):
                 login()
         elif(option == 0):
                 exit()
@@ -113,11 +113,11 @@ def supervisor(user_id):
                         print(query[i][0])
                         customerSummaryReport(query[i][0])
         elif(option == 3):
-                cursor.execute("Select name,count(service_no), sum(internal_cost) as c, sum(price) as p from service_agreements, accounts, personnel where (master_account  = account_no) and (account_mgr = pid) and (supervisor_pid = :user_id) group by name order by (p-c)",{"user_id":user_id})     
+                cursor.execute("Select name,count(service_no), sum(internal_cost) as c, sum(price) as p from service_agreements, accounts, personnel where (master_account  = account_no) and (account_mgr = pid) and (supervisor_pid = :user_id) group by name order by (p-c)",{"user_id":user_id})
                 query = cursor.fetchall()
                 for i in range(0,len(query)):
                         print("\nAccount Manager: "+query[i][0]+"\nTotal Number of Service Agreements: "+str(query[i][1])+"\nSum of prices: $"+str(query[i][2])+"\nSum of internal costs: $"+str(query[i][3])+"\n")
-  
+
         elif(option == 4):
                 login()
         elif(option == 0):
@@ -154,36 +154,131 @@ def driver(user_id):
                 print("pick_up container_id: " + inf[4])
         return
 
+def validate_new_account():
+    global connection, cursor
+    user_pid = input(''' please enter the pid: \n (press m to back to main page)\n (press e to exit)\n''')
+    if user_pid == "m" or user_pid == "M":
+        main_interface()
+    if user_pid == "e" or user_pid == "E":
+        exit()
+    cursor.execute('''
+                    SELECT pid
+                    FROM personnel
+                    WHERE pid = :uid
+                    ''', {'uid': user_pid})
+    user_id = cursor.fetchone()
+    if user_id == None:
+        print("invalid pid")
+        add_login_account()
+    cursor.execute('''
+                    SELECT user_id
+                    FROM users
+                    WHERE user_id = :uid'''
+                    , {'uid': user_pid})
+    user_id = cursor.fetchone()
+    if user_id != None:
+        print("Account already exist")
+        login()
+
+    role = input('''What is your role: \n 1. Account Manager \n 2. Driver \n (press e to exit)\n (press m to back to main page)\n''')
+    if role == 'm' or role == 'M':
+        main_interface()
+    if role == 'e' or role == 'E':
+        exit()
+    if role == '1':
+        cursor.execute('''SELECT pid FROM account_managers WHERE pid = :user''', {'user': user_pid})
+        pid = cursor.fetchone()
+        if pid == None:
+            print("Role not correct, please sign up again\n")
+            add_login_account()
+        Role = "Account Manager"
+    if role == '2':
+        cursor.execute('''SELECT pid FROM drivers WHERE pid = :user''', {'user': user_pid})
+        pid = cursor.fetchone()
+        if pid == None:
+            print("Role not correct, please sign up again\n")
+            add_login_account()
+        Role = "Driver"
+    return user_pid, Role
+
+def login_check(user_pid, role):
+    global connection, cursor
+    newlogin = input("Create Login: ")
+    user = [user_pid, role, newlogin, 0]
+    cursor.execute("SELECT login FROM users WHERE login = :nl", {'nl': newlogin})
+    user_check = cursor.fetchone()
+    return user, user_check
+
+def add_login_account():
+    global connection, cursor
+    user_pid, role = validate_new_account()
+    user, user_check = login_check(user_pid, role)
+    while user_check != None:
+        print("login already exist!\n")
+        user, user_check = login_check(user_pid, role)
+    user[3] = input("Create password: ")
+    print(user)
+    cursor.execute('Insert into users values (?, ?, ?, ?);', user)
+    connection.commit()
+    print("success!\n please log in with your Login and password")
+    login()
+    connection.close()
+    exit()
+    return
+
 def login():
-        # login input
-        login = input('Please enter the login: ')
-        # password input
-        password = input('Please enter the password: ')
-        # find matched information
-        cursor.execute('''select user_id,role,login,password
-                        from users where login =:l and password = :pw''',
-                        {'l':login, 'pw':password})
-        # check the role of the user
-        id_role = cursor.fetchone()
-        if(id_role[1] == 'Account Manager'):
-                accountManager(id_role[0])
-        if(id_role[1] == 'Supervisor'):
-                supervisor(id_role[0])
-        if(id_role[1] == 'Dispatcher'):
-                dispatcher(id_role[0])
-        if(id_role[1] == 'Driver'):
-                driver(id_role[0])
-    
-        return
+    global connection, cursor
+    # login input
+    login = input('Please enter the login: \n (press e to exit)\n (press m back to main page)\n' )
+    if login == 'e' or login == 'E':
+        exit()
+    if login == 'm' or login == 'M':
+        main_interface()
+    # password input
+    password = input('please enter the password: \n (press e to exit)\n (press m back to main page)\n')
+    if password == "e" or password == "E":
+        exit()
+    if password == "m" or password == "M":
+        main_interface()
+    # find matched information
+    cursor.execute('''select user_id,role,login,password
+                    from users where login =:l and password = :pw''',
+                    {'l':login, 'pw':password})
+    # check the role of the user
+    id_role = cursor.fetchone()
+    if(id_role[1] == 'Account Manager'):
+      accountManager(id_role[0])
+    if(id_role[1] == 'Supervisor'):
+      supervisor(id_role[0])
+    if(id_role[1] == 'Dispatcher'):
+      dispatcher(id_role[0])
+    if(id_role[1] == 'Driver'):
+      driver(id_role[0])
+
+    return
+
+def main_interface():
+    option = input(" 1. log in \n 2. sign up\n (press e to exit)\n")
+    while option != 'e' or option != 'E':
+        if option == '1':
+            login()
+            exit()
+        if option == '2':
+            add_login_account()
+            exit()
+        if option == 'e' or option == 'E':
+            exit()
+        option = input("invalid key\n")
+    return
+
 
 def main():
         global connection, cursor
 
         path="./mp1.db"
         connect(path)
-        login()
+        main_interface()
         return
-
 
 
 if __name__ == "__main__":

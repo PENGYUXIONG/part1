@@ -21,6 +21,7 @@ def connect(path):
         return
 
 def accountManager(user_id):
+  global connection, cursor
   print("1: Select customer (master account)\n2: Create new master account")
   option = int(input())
   if(option == 1):
@@ -77,6 +78,7 @@ def accountManager(user_id):
   return
 
 def supervisor(user_id):
+  global connection, cursor
   print("1: Create new master account\n2: Add new service agreement\n3: Create summary report for a single customer\n4: Create summary report for account managers")
   option = int(input())
   if(option == 1):
@@ -90,10 +92,12 @@ def supervisor(user_id):
   return
 
 def dispatcher(user_id):
-  print("Select a service agreement:")
-  return
+    global connection, cursor
+    print("Select a service agreement:")
+    return
 
 def driver(user_id):
+    global connection, cursor
     # get date range from the input
     Date_Range = '+' + input("Please input the date range (an int number):") + ' day'
     cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
@@ -120,9 +124,10 @@ def driver(user_id):
     return
 
 def validate_new_account():
+    global connection, cursor
     user_pid = input(''' please enter the pid: \n (press m to back to main page)\n (press e to exit)\n''')
     if user_pid == "m" or user_pid == "M":
-        main()
+        main_interface()
     if user_pid == "e" or user_pid == "E":
         exit()
     cursor.execute('''
@@ -146,7 +151,7 @@ def validate_new_account():
 
     role = input('''What is your role: \n 1. Account Manager \n 2. Driver \n (press e to exit)\n (press m to back to main page)\n''')
     if role == 'm' or role == 'M':
-        main()
+        main_interface()
     if role == 'e' or role == 'E':
         exit()
     if role == '1':
@@ -166,6 +171,7 @@ def validate_new_account():
     return user_pid, Role
 
 def login_check(user_pid, role):
+    global connection, cursor
     newlogin = input("Create Login: ")
     user = [user_pid, role, newlogin, 0]
     cursor.execute("SELECT login FROM users WHERE login = :nl", {'nl': newlogin})
@@ -173,6 +179,7 @@ def login_check(user_pid, role):
     return user, user_check
 
 def add_login_account():
+    global connection, cursor
     user_pid, role = validate_new_account()
     user, user_check = login_check(user_pid, role)
     while user_check != None:
@@ -181,24 +188,27 @@ def add_login_account():
     user[3] = input("Create password: ")
     print(user)
     cursor.execute('Insert into users values (?, ?, ?, ?);', user)
+    connection.commit()
     print("success!\n please log in with your Login and password")
     login()
+    connection.close()
     exit()
     return
 
 def login():
+    global connection, cursor
     # login input
     login = input('Please enter the login: \n (press e to exit)\n (press m back to main page)\n' )
     if login == 'e' or login == 'E':
         exit()
     if login == 'm' or login == 'M':
-        main()
+        main_interface()
     # password input
     password = input('please enter the password: \n (press e to exit)\n (press m back to main page)\n')
     if password == "e" or password == "E":
         exit()
     if password == "m" or password == "M":
-        mian()
+        main_interface()
     # find matched information
     cursor.execute('''select user_id,role,login,password
                     from users where login =:l and password = :pw''',
@@ -216,22 +226,27 @@ def login():
 
     return
 
+def main_interface():
+    option = input(" 1. log in \n 2. sign up\n (press e to exit)\n")
+    while option != 'e' or option != 'E':
+        if option == '1':
+            login()
+            exit()
+        if option == '2':
+            add_login_account()
+            exit()
+        if option == 'e' or option == 'E':
+            exit()
+        option = input("invalid key\n")
+    return
+
+
 def main():
         global connection, cursor
 
         path="./mp1.db"
         connect(path)
-        option = input(" 1. log in \n 2. sign up\n (press e to exit)\n")
-        while option != 'e' or option != 'E':
-            if option == '1':
-                login()
-                exit()
-            if option == '2':
-                add_login_account()
-                exit()
-            if option == 'e' or option == 'E':
-                exit()
-            option = input("invalid key\n")
+        main_interface()
         return
 
 
