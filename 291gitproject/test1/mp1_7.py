@@ -93,6 +93,7 @@ def dispatcher(user_id):
   return
 
 def driver(user_id):
+    # get date range from the input
     Date_Range = '+' + input("Please input the date range (an int number):") + ' day'
     cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
                     sf.cid_drop_off, sf.cid_pick_up
@@ -106,6 +107,7 @@ def driver(user_id):
                      sf.date_time < date('now', :range)
                     and
                     sf.driver_id = :id''', {"id":user_id, "range":Date_Range})
+    # get all informations of the qualified tours
     informations = cursor.fetchall()
     for inf in informations:
         # print information
@@ -117,8 +119,15 @@ def driver(user_id):
     return
 
 def login():
+    # login input
     login = input('Please enter the login: ')
-    cursor.execute('select user_id,role,login,password from users where login =:l',{'l':login})
+    # password input
+    password = input('please enter the password: ')
+    # find matched information
+    cursor.execute('''select user_id,role,login,password
+                    from users where login =:l and password = :pw''',
+                    {'l':login, 'pw':password})
+    # check the role of the user
     id_role = cursor.fetchone()
     if(id_role[1] == 'Account Manager'):
       accountManager(id_role[0])
