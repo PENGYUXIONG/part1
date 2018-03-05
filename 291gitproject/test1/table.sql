@@ -140,6 +140,9 @@ INSERT INTO users VALUES('55263','Supervisor','100','101');
 INSERT INTO users VALUES('43743','Driver','300','301');
 INSERT INTO users VALUES('40000','Dispatcher','400','401');
 
+--Test for login (dispatcher)
+INSERT INTO personnel VALUES('40001','Test Dispatcher One','d1@gmail.com','Dispatcher One Avenue',NULL);
+
 --trucks owned by drivers
 INSERT INTO trucks VALUES('4T1BE','McLaren F1','front loader');
 INSERT INTO trucks VALUES('KM8SC','Chevrolet LUV','garbage bin collector');

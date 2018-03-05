@@ -177,8 +177,10 @@ def driver(user_id):
 def validate_new_account():
     global connection, cursor
     user_pid = input(''' please enter the pid: \n (press m to back to main page)\n (press e to exit)\n''')
+
     if user_pid == "m" or user_pid == "M":
         main_interface()
+
     if user_pid == "e" or user_pid == "E":
         exit()
     cursor.execute('''
@@ -189,6 +191,7 @@ def validate_new_account():
                     supervisor_pid = :uid
                     ''', {'uid': user_pid})
     user_id = cursor.fetchone()
+
     if user_id == None:
         print("invalid pid")
         add_login_account()
@@ -198,15 +201,19 @@ def validate_new_account():
                     WHERE user_id = :uid'''
                     , {'uid': user_pid})
     user_id = cursor.fetchone()
+
     if user_id != None:
         print("Account already exist")
         login()
 
     role = input('''What is your role: \n 1. Account Manager \n 2. Driver \n 3. Supervisor\n 4. Dispatcher\n (press e to exit)\n (press m to back to main page)\n''')
+
     if role == 'm' or role == 'M':
         main_interface()
+
     if role == 'e' or role == 'E':
         exit()
+
     if role == '1':
         cursor.execute('''SELECT pid FROM account_managers WHERE pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -214,6 +221,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Account Manager"
+
     if role == '2':
         cursor.execute('''SELECT pid FROM drivers WHERE pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -221,6 +229,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Driver"
+
     if role == '3':
         cursor.execute('''SELECT supervisor_pid FROM personnel WHERE supervisor_pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -228,6 +237,23 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Supervisor"
+
+    if role == '4':
+        cursor.execute('''
+        SELECT pid
+        FROM personnel
+        WHERE
+        :user = pid
+        EXCEPT
+        SELECT pid FROM drivers
+        EXCEPT
+        SELECT pid FROM account_managers
+         ''', {'user': user_pid})
+        pid = cursor.fetchone()
+        if pid == None:
+            print("Role not correct, please sign up again\n")
+            add_login_account()
+        Role = "Dispatcher"
     return user_pid, Role
 
 def login_check(user_pid, role):
