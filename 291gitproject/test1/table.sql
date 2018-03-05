@@ -138,6 +138,7 @@ CREATE TABLE service_fulfillments (
 INSERT INTO users VALUES('34725','Account Manager','000','001');
 INSERT INTO users VALUES('55263','Supervisor','100','101');
 INSERT INTO users VALUES('43743','Driver','300','301');
+INSERT INTO users VALUES('40000','Dispatcher','400','401');
 
 --trucks owned by drivers
 INSERT INTO trucks VALUES('4T1BE','McLaren F1','front loader');
@@ -363,6 +364,10 @@ INSERT INTO personnel VALUES('18457','Chloe Cline','tromey@me.com','Brandywine D
 INSERT INTO personnel VALUES('63403','Everett Chaney','cgarcia@sbcglobal.net','Ivy Court','85670');
 INSERT INTO personnel VALUES('65898','Braden Odonnell','quantaman@mac.com','Lilac Lane','25573');
 INSERT INTO personnel VALUES('44330','Abril Ayers','empathy@gmail.com','Delaware Avenue','60135');
+
+
+--information about dispatchers
+INSERT INTO personnel VALUES('40000','Test Dispatcher One','d1@gmail.com','Dispatcher One Avenue',NULL);
 
 
 --information about drivers who own a truck
