@@ -182,9 +182,11 @@ def validate_new_account():
     if user_pid == "e" or user_pid == "E":
         exit()
     cursor.execute('''
-                    SELECT pid
+                    SELECT pid, supervisor_pid
                     FROM personnel
                     WHERE pid = :uid
+                    or
+                    supervisor_pid = :uid
                     ''', {'uid': user_pid})
     user_id = cursor.fetchone()
     if user_id == None:
@@ -200,7 +202,7 @@ def validate_new_account():
         print("Account already exist")
         login()
 
-    role = input('''What is your role: \n 1. Account Manager \n 2. Driver \n (press e to exit)\n (press m to back to main page)\n''')
+    role = input('''What is your role: \n 1. Account Manager \n 2. Driver \n 3. Supervisor\n 4. Dispatcher\n (press e to exit)\n (press m to back to main page)\n''')
     if role == 'm' or role == 'M':
         main_interface()
     if role == 'e' or role == 'E':
@@ -219,6 +221,13 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Driver"
+    if role == '3':
+        cursor.execute('''SELECT supervisor_pid FROM personnel WHERE supervisor_pid = :user''', {'user': user_pid})
+        pid = cursor.fetchone()
+        if pid == None:
+            print("Role not correct, please sign up again\n")
+            add_login_account()
+        Role = "Supervisor"
     return user_pid, Role
 
 def login_check(user_pid, role):
