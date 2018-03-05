@@ -265,6 +265,10 @@ def login():
                     {'l':login, 'pw':password})
     # check the role of the user
     id_role = cursor.fetchone()
+    if id_role == None:
+        print("No matched login in database, please check login and password")
+        login()
+        return
     if(id_role[1] == 'Account Manager'):
       accountManager(id_role[0])
     if(id_role[1] == 'Supervisor'):
