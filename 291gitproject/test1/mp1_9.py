@@ -137,7 +137,20 @@ def dispatcher(user_id):
 
 def driver(user_id):
     # get date range from the input
-        Date_Range = '+' + input("Please input the date range (an int number):") + ' day'
+        Start_date = input("Please input the start date for that search with correct form (yyyy-mm-dd): ")
+        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"start":Start_date})
+        Sdate = cursor.fetchone()[0]
+        if Sdate == None:
+            print("invalid date format")
+            driver(user_id)
+            return
+        End_date = input("Please input the end date for that search with correct form (yyyy-mm-dd): ")
+        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date)", {"End_date":End_date})
+        Edate = cursor.fetchone()[0]
+        if Edate == None:
+            print("invalid date format")
+            driver(user_id)
+            return
         cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
                     sf.cid_drop_off, sf.cid_pick_up
                     FROM service_agreements sa, service_fulfillments sf
@@ -145,11 +158,11 @@ def driver(user_id):
                     and
                     sa.service_no = sf.service_no
                     and
-                    date('now') < sf.date_time
+                    strftime('%Y-%m-%d %H:%M:%S.%f', :start) < sf.date_time
                     and
-                     sf.date_time < date('now', :range)
+                     sf.date_time < strftime('%Y-%m-%d %H:%M:%S.%f', :End_date)
                     and
-                    sf.driver_id = :id''', {"id":user_id, "range":Date_Range})
+                    sf.driver_id = :id''', {"id":user_id, "start":Start_date, "End_date":End_date})
         # get all informations of the qualified tours
         informations = cursor.fetchall()
         for inf in informations:
@@ -229,7 +242,6 @@ def add_login_account():
     connection.commit()
     print("success!\n please log in with your Login and password")
     login()
-    connection.close()
     exit()
     return
 
