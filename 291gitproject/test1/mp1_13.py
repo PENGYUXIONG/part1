@@ -83,7 +83,7 @@ def listCustomers(manager_id):
             exit()
 
 def accountManager(user_id):
-        option =print("1: Select customer (master account)\n2: Create new master account\n3: Add new service agreement\n4: Create summary report for a single customer\n5: Logout\n0: Exit\n")
+        option =input("1: Select customer (master account)\n2: Create new master account\n3: Add new service agreement\n4: Create summary report for a single customer\n5: Logout\n0: Exit\n")
         if(option == '1'):
                 customer = listCustomers(user_id)
                 cursor.execute("Select * from accounts where account_no =:customer",{"customer":customer})
@@ -124,8 +124,9 @@ def accountManager(user_id):
         #exit program
         elif(option == '0'):
                 exit()
-        #calls itseld
-        accountManager(user_id)
+        #calls itself
+        else:
+                accountManager(user_id)
 
 def supervisor(user_id):
         option = input("1: Create new master account\n2: Create summary report for a single customer\n3: Create summary report for account managers\n4: Logout\n0: Exit\n")
