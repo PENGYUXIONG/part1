@@ -199,7 +199,7 @@ def dispatcher(user_id):
                         driverList = cursor.execute(query).fetchall()
 
                         print('Pid')
-                        for row in serviceList:
+                        for row in driverList:
                                 print(row[0])
 
 
@@ -253,7 +253,7 @@ def dispatcher(user_id):
                                 and sg.location = ?
                                 '''                 
 
-                        slct_Container_Id = cursor.execute(query,(slctService[0][2],)).fetchall()
+                        slct_Container_Id = cursor.execute(query,(slctService[2],)).fetchall()
                         if(len(slct_Container_Id) != 0):
                                 print("Pick-up-container automatically selected. ")
                         else:
@@ -286,7 +286,7 @@ def dispatcher(user_id):
                                 '''
                         
                         #Get list of container that matches waste type
-                        containerList = cursor.execute(query,(slctService[0][3],)).fetchall()
+                        containerList = cursor.execute(query,(slctService[3],)).fetchall()
                         #Show list if available
                         if(len(containerList) == 0):
                                 print("No containers available for drop off, Dummy container being select.")
@@ -314,7 +314,7 @@ def dispatcher(user_id):
                         
                         #Create the fulfillments table
                         query = "Insert into service_fulfillments values (?,?,?,?,?,?,?)"
-                        cursor.execute(query,(date,slctService[0][1],slct_Service_No,slctTruck[0][0],slct_Driver_Id,slct_Container_Id2,slct_Container_Id[0][0]))
+                        cursor.execute(query,(date,slctService[1],slctService[0],slctTruck[0][0],slct_Driver_Id,slct_Container_Id2,slct_Container_Id[0][0]))
                         connection.commit()
                         print("Table created! \n")
                 
