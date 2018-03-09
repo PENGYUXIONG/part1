@@ -1,5 +1,6 @@
 import sqlite3
 import getpass
+import datetime
 from hashlib import pbkdf2_hmac 
 connection = None
 cursor = None
@@ -30,9 +31,16 @@ def connect(path):
 
         return
 
+def date(text):
+        try:
+                datetime.datetime.strptime(text, '%Y-%m-%d')
+                return True
+        except ValueError:
+                return False        
+        
 def createMasterAccount(manager):
         #gets info
-        account = [0,manager,0,0,0,0,0,0]
+        account = [0,manager,0,0,0,'',0,0]
         account[0] = input("\nEnter account number: ")
         #checks if account is already in db
         cursor.execute("Select count(*) from accounts where account_no = :a",{"a":account[0]})
@@ -42,8 +50,9 @@ def createMasterAccount(manager):
         account[2] = input("Enter customer name: ")
         account[3] = input("Enter customer info.: ")
         account[4] = input("Enter customer type: ")
-        account[5] = input("Enter start date: ")
-        account[6] = input("Enter end date: ")
+        while date(account[5]) == False:
+                account[5] = input("Enter start date (YYYY-MM-DD): ")
+        account[6] = input("Enter end date (YYYY-MM-DD): ")
         account[7] = float(input("Enter total amount of services customer has with company: "))
         cursor.execute('Insert into accounts values (?, ?, ?, ?, ?, ?, ?, ?);',account)
         connection.commit()
