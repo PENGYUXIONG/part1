@@ -71,16 +71,16 @@ def listCustomers(manager_id):
                 print(str(i+1)+". "+j[1]+" ("+j[0]+")")
         print(str(len(query)+1)+": Cancel\n0: Exit")
         while True:
-          option = int(input("\nSelect the customer: "))
-          #cancels
-          if option == len(query)+1:
-            accountManager(manager_id)
-          #lists info of customer at index
-          elif option in range(1,len(query)+1):
-            return query[option-1][0]
-          #exits
-          elif option == 0:
-            exit()
+                option = int(input("\nSelect the customer: "))
+                #cancels
+                if option == len(query)+1:
+                        accountManager(manager_id)
+                #lists info of customer at index
+                elif option in range(1,len(query)+1):
+                        return query[option-1][0]
+                #exits
+                elif option == 0:
+                        exit()
 
 def accountManager(user_id):
         option =input("1: Select customer (master account)\n2: Create new master account\n3: Add new service agreement\n4: Create summary report for a single customer\n5: Logout\n0: Exit\n")
@@ -125,8 +125,7 @@ def accountManager(user_id):
         elif(option == '0'):
                 exit()
         #calls itself
-        else:
-                accountManager(user_id)
+        accountManager(user_id)
 
 def supervisor(user_id):
         option = input("1: Create new master account\n2: Create summary report for a single customer\n3: Create summary report for account managers\n4: Logout\n0: Exit\n")
