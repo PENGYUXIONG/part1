@@ -1,11 +1,7 @@
 import sqlite3
 import getpass
-<<<<<<< HEAD
-from hashlib import pbkdf2_hmac
-=======
 import datetime
 from hashlib import pbkdf2_hmac 
->>>>>>> 6b7d3f7e3d1e0cc67107dc6c9f0b57dd0decf68d
 connection = None
 cursor = None
 hash_name = 'sha256'
@@ -24,7 +20,7 @@ def connect(path):
         cursor = connection.cursor()
         print('Done')
         #Create and populate table is the database using 'init.sql' (from eclass)
-
+        
 
         #cursor.execute(' PRAGMA foreign_keys=ON; ')
         print("Importing table ... ", end = '')
@@ -35,16 +31,23 @@ def connect(path):
 
         return
 
-def date(text):
+def date_check(text):
         try:
                 datetime.datetime.strptime(text, '%Y-%m-%d')
                 return True
         except ValueError:
                 return False        
         
+def float_check(price):
+        n = str(price).split('.')
+        if len(y[-1]) > 2:
+                return False
+        else:
+                return True
+        
 def createMasterAccount(manager):
         #gets info
-        account = [0,manager,0,0,0,'',0,0]
+        account = [0,manager,0,0,0,'','','']
         account[0] = input("\nEnter account number: ")
         #checks if account is already in db
         cursor.execute("Select count(*) from accounts where account_no = :a",{"a":account[0]})
@@ -54,10 +57,11 @@ def createMasterAccount(manager):
         account[2] = input("Enter customer name: ")
         account[3] = input("Enter customer info.: ")
         account[4] = input("Enter customer type: ")
-        while date(account[5]) == False:
+        while date_check(account[5]) == False:
                 account[5] = input("Enter start date (YYYY-MM-DD): ")
-        account[6] = input("Enter end date (YYYY-MM-DD): ")
-        account[7] = float(input("Enter total amount of services customer has with company: "))
+        while date_check(account[6]) == False:
+                account[6] = input("Enter end date (YYYY-MM-DD): ")
+        account[7] = float(input("Enter total amount of the services customer has with company: "))
         cursor.execute('Insert into accounts values (?, ?, ?, ?, ?, ?, ?, ?);',account)
         connection.commit()
         return
@@ -159,7 +163,7 @@ def supervisor(user_id):
                         print(query[i][0])
                         customerSummaryReport(query[i][1])
         #Summary report managers
-        elif(option == '3'):
+        elif(option == '3'): 
                 #selects details of each desired manager
                 cursor.execute("Select name,count(service_no), sum(internal_cost) as c, sum(price) as p from service_agreements, accounts, personnel where (master_account  = account_no) and (account_mgr = pid) and (supervisor_pid = :user_id) group by name order by (p-c)",{"user_id":user_id})
                 query = cursor.fetchall()
@@ -183,10 +187,10 @@ def dispatcher(user_id):
                 choise = input("Choose what do you want to do: ")
 
                 if (choise == '1'):
-
+                
                         #Select service
                         query = "SELECT * from service_agreements where service_no = ?"
-                        #Make sure input exists in database
+                        #Make sure input exists in database 
                         while(True):
                                 slct_Service_No = input("Select a service agreement (Service No): ")
                                 slctService = cursor.execute(query,(slct_Service_No,)).fetchall()
@@ -198,7 +202,7 @@ def dispatcher(user_id):
 
                         #Select driver
                         query = "SELECT * from drivers where pid = ?"
-                        #Make sure input exists in database
+                        #Make sure input exists in database 
                         while(True):
                                 slct_Driver_Id = input("Select a driver (id): ")
                                 slctDriver = cursor.execute(query,(slct_Driver_Id,)).fetchall()
@@ -212,17 +216,17 @@ def dispatcher(user_id):
                         if(slctDriver[0][2] != None):
                                 slctTruck = cursor.execute(query,(slctDriver[0][2],)).fetchall()
                                 print("The driver's truck being select.")
-                        else:
+                        else:   
                                 while(True):
                                         #Make sure input exists in database
                                         slct_Truck_Id = input("Select a truck (id): ")
                                         slctTruck = cursor.execute(query,(slct_Truck_Id,)).fetchall()
                                         if(len(slctTruck) != 0):
                                                 #Make sure the truck is owned by company
-                                                query2 = '''SELECT * from trucks
+                                                query2 = '''SELECT * from trucks 
                                                         where truck_id = ?
-                                                        and truck_id not in
-                                                        (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''
+                                                        and truck_id not in 
+                                                        (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''                
                                                 slctTruck = cursor.execute(query2,(slct_Truck_Id,)).fetchall()
                                                 if(len(slctTruck) != 0):
                                                         break
@@ -238,13 +242,13 @@ def dispatcher(user_id):
                                 FROM containers c
                                 WHERE (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_pick_up = c.container_id)
                                 <
-                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id)
+                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id) 
                                 intersect
                                 select cid_drop_off
                                 from service_fulfillments sf, service_agreements sg
                                 where sf.service_no = sg.service_no
                                 and sg.location = ?
-                                '''
+                                '''                 
 
                         slct_Container_Id = cursor.execute(query,(slctService[0][2],)).fetchall()
                         if(len(slct_Container_Id) != 0):
@@ -253,7 +257,7 @@ def dispatcher(user_id):
                                 print("No container at the loacation, Dunmmy container being select. ")
                                 slct_Container_Id = "NULLID"
 
-
+                        
                         #Select drop off container
                         query = '''
                                 SELECT c.container_id
@@ -266,7 +270,7 @@ def dispatcher(user_id):
                                 FROM containers c
                                 WHERE (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_pick_up = c.container_id)
                                 >
-                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id)
+                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id) 
                                 intersect
                                 select container_id
                                 from container_waste_types
@@ -277,7 +281,7 @@ def dispatcher(user_id):
                                 where container_id = 'NULLID'
 
                                 '''
-
+                        
                         #Get list of container that matches waste type
                         containerList = cursor.execute(query,(slctService[0][3],)).fetchall()
                         #Show list if available
@@ -286,8 +290,8 @@ def dispatcher(user_id):
                                 slct_Container_Id2 = [("NULLID",)]
                         else:
                                 for row in containerList:
-                                        print(row[0])
-
+                                        print(row[0]) 
+                        
                                 query = "SELECT * from containers where container_id = ?"
                                 while(True):
                                         slct_Container_Id2 = input("Select a container (id) from list above to drop off: ")
@@ -296,7 +300,7 @@ def dispatcher(user_id):
                                         else:
                                                 print("This is not an container from list, please try another one. \n")
 
-
+                        
                         while(True):
                                 date = input("Enter in the date in the form YYYY-MM-DD: ").replace(" ","")
                                 if(len(date) != 10 or date[4] != "-" or date[7] != "-" or not date.replace("-","").isdigit() ):
@@ -304,13 +308,13 @@ def dispatcher(user_id):
                                 else:
                                         break
 
-
+                        
                         #Create the fulfillments table
                         query = "Insert into service_fulfillments values (?,?,?,?,?,?,?)"
                         cursor.execute(query,(date,slctService[0][1],slct_Service_No,slctTruck[0][0],slct_Driver_Id,slct_Container_Id2,slct_Container_Id[0][0]))
                         connection.commit()
                         print("Table created! \n")
-
+                
                 elif(choise == '2'):
                         main_interface()
                 elif(choise == '0'):
@@ -333,13 +337,6 @@ def driver(user_id):
         Edate = cursor.fetchone()[0]
         if Edate == None:
             print("invalid date format")
-            driver(user_id)
-            return
-        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) > strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
-        date_check = cursor.fetchone()[0]
-        print(date_check)
-        if date_check != 1:
-            print("end date need to be larger than start date!")
             driver(user_id)
             return
         cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
@@ -459,7 +456,7 @@ def add_login_account():
         print("Login already exists!\n")
         user, user_check = login_check(user_pid, role)
 
-    #Encrypt password
+    #Encrypt password    
     password = input("Create password: ")
     dk = pbkdf2_hmac(hash_name, bytearray(password, 'ascii'), bytearray(salt, 'ascii'), iterations)
     user[3] = dk
@@ -511,7 +508,7 @@ def main_interface():
         if option == '0':
                 exit()
         print("Invalid key\n")
-    return
+    return  
 
 def insertUser():
         global connection, cursor, hash_name, salt, iterations
@@ -527,10 +524,10 @@ def insertUser():
         connection.commit()
 
 def main():
-        global connection, cursor
+        global connection, cursor        
         path="./mp1.db"
         connect(path)
-        insertUser();
+        insertUser();  
         main_interface()
         connection.close()
         return
