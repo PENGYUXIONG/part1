@@ -5,18 +5,18 @@
 
 
 -- The following commands drops the tables in case they exist from earlier runs.
--- DROP TABLE IF EXISTS users;
--- DROP TABLE IF EXISTS service_fulfillments;
--- DROP TABLE IF EXISTS service_agreements;
--- DROP TABLE IF EXISTS accounts;
--- DROP TABLE IF EXISTS drivers;
--- DROP TABLE IF EXISTS account_managers;
--- DROP TABLE IF EXISTS personnel;
--- DROP TABLE IF EXISTS container_waste_types;
--- DROP TABLE IF EXISTS waste_types;
--- DROP TABLE IF EXISTS containers;
--- DROP TABLE IF EXISTS maintenance_records;
--- DROP TABLE IF EXISTS trucks;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS service_fulfillments;
+DROP TABLE IF EXISTS service_agreements;
+DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS drivers;
+DROP TABLE IF EXISTS account_managers;
+DROP TABLE IF EXISTS personnel;
+DROP TABLE IF EXISTS container_waste_types;
+DROP TABLE IF EXISTS waste_types;
+DROP TABLE IF EXISTS containers;
+DROP TABLE IF EXISTS maintenance_records;
+DROP TABLE IF EXISTS trucks;
 
 
 -- The following commands create the tables including FOREIGN KEY constraints
