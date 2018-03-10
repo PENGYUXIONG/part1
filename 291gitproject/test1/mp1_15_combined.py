@@ -145,9 +145,15 @@ def accountManager(user_id):
                         service_no = int(service_no) + 1
                 location = input("Enter location: ")
                 cursor.execute("Select * from waste_types")
-                waste_types = cursor.fetchall()[0]
+                query = cursor.fetchall()
+                waste_types = []
+                for i in range(0,len(query)):
+                        waste_types.append(query[i][0])
+                print("Valid waste types - "+", ".join(waste_types))
                 waste = input("Enter waste type: ")
-                while waste not in waste_types:
+                while True:
+                        if waste in waste_types:
+                                break
                         waste = input("Please enter a valid waste type: ")
                 pick_up = input("Enter pick up schedule: ")
                 contact = input("Enter local contact: ")
