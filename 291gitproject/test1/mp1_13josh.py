@@ -22,7 +22,7 @@ def connect(path):
         #Create and populate table is the database using 'init.sql' (from eclass)
         
 
-        #cursor.execute(' PRAGMA foreign_keys=ON; ')
+        cursor.execute(' PRAGMA foreign_keys=ON; ')
         print("Importing table ... ", end = '')
         sqlcommand = open("table.sql").read()
         cursor.executescript(sqlcommand)
@@ -554,7 +554,7 @@ def insertUser():
         dk = pbkdf2_hmac(hash_name, bytearray('001', 'ascii'), bytearray(salt, 'ascii'), iterations)
         cursor.execute(query, ('34725', 'Account Manager', '000', dk))
         dk = pbkdf2_hmac(hash_name, bytearray('101', 'ascii'), bytearray(salt, 'ascii'), iterations)
-        cursor.execute(query, ('55263', 'Supervisor', '100', dk))
+        cursor.execute(query, ('50000', 'Supervisor', '100', dk))
         dk = pbkdf2_hmac(hash_name, bytearray('301', 'ascii'), bytearray(salt, 'ascii'), iterations)
         cursor.execute(query, ('43743', 'Driver', '300', dk))
         dk = pbkdf2_hmac(hash_name, bytearray('401', 'ascii'), bytearray(salt, 'ascii'), iterations)
