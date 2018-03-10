@@ -296,6 +296,15 @@ def dispatcher(user_id):
                                 slctTruck = cursor.execute(query,(slctDriver[0][2],)).fetchall()
                                 print("The driver's truck being select.")
                         else:   
+                                #Show list of aviliabe trucks
+                                        query3 = '''SELECT truck_id from trucks 
+                                                WHERE truck_id not in 
+                                                (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''
+                                        truckList = cursor.execute(query3).fetchall()
+                                        print('Truck id')
+                                        for row in truckList:
+                                                print(row[0])
+
                                 while(True):
                                         #Make sure input exists in database
                                         slct_Truck_Id = input("Select a truck (id): ")
@@ -334,7 +343,7 @@ def dispatcher(user_id):
                                 print("Pick-up-container automatically selected. ")
                         else:
                                 print("No container at the loacation, Dunmmy container being select. ")
-                                slct_Container_Id = "NULLID"
+                                slct_Container_Id = [("NULLID",)]
 
                         
                         #Select drop off container
