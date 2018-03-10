@@ -1,6 +1,7 @@
 import sqlite3
 import getpass
 import datetime
+import time
 from hashlib import pbkdf2_hmac 
 connection = None
 cursor = None
@@ -71,7 +72,7 @@ def createMasterAccount(manager):
         account[4] = input("Enter customer type: ")
         while date_check(account[5]) == False:
                 account[5] = input("Enter start date (YYYY-MM-DD): ")
-        while date_check(account[6]) == False:
+        while date_check(account[6]) == False or time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
                 account[6] = input("Enter end date (YYYY-MM-DD): ")
         while float_check(account[7]) == False:
                 account[7] = input("Enter total amount of the services customer has with company: ")
@@ -90,11 +91,11 @@ def customerSummaryReport(customer):
         for i in range(0,len(types)):
                 for j in range(0,len(types[i])):
                         s.add(types[i][j])
-        if int_check(info[1]):
+        if info[1] == None:
                 info[1] = 0
-        if int_check(info[2]):
+        if info[2] == None:
                 info[2] = 0
-        print("Total number of service agreements: "+str(info[0])+"\nSum of prices: $"+str(info[1])+"\nSum of costs: $"+str(info[2])+"\nTypes: "+", ".join(s)+"\n")
+        print("Total number of service agreements: "+str(info[0])+"\nSum of prices: $"+str(round(info[1],2))+"\nSum of costs: $"+str(round(info[2],2))+"\nTypes: "+", ".join(s)+"\n")
         return
 
 def listCustomers(manager_id):
@@ -114,6 +115,7 @@ def listCustomers(manager_id):
                         return query[option-1][0]
                 #exits
                 elif option == 0:
+                        connection.close()
                         exit()
 
 def accountManager(user_id):
@@ -161,6 +163,7 @@ def accountManager(user_id):
                 main_interface()
         #exit program
         elif(option == '0'):
+                connection.close()
                 exit()
         #calls itself
         accountManager(user_id)
@@ -181,7 +184,8 @@ def supervisor(user_id):
                                 manager = input("Select manager: ")
                         if manager == str(len(managers)+1):
                                 supervisor(user_id)
-                        elif manager == '0':    
+                        elif manager == '0': 
+                                connection.close()
                                 exit()
                         elif int(manager) in range(1,len(managers)+1):
                                 createMasterAccount(manager)
@@ -192,18 +196,21 @@ def supervisor(user_id):
                 cursor.execute("Select customer_name, account_no from accounts, personnel where account_mgr = pid and supervisor_pid = :user_id",{"user_id":user_id})
                 query = cursor.fetchall()
                 for i in range(0,len(query)):
-                        print(str(i)+": "+query[i][0])
+                        print(str(i+1)+": "+query[i][0])
                 print(str(len(query)+1)+": Cancel\n0: Exit")
                 while True:
                         account = ''
                         while int_check(account) == False:
-                                account = input("Select account: ")   
-                        if account == str(len(query)+1):
+                                account = input("Select account: ") 
+                        account = int(account)
+                        if account == len(query)+1:
                                 supervisor(user_id)
-                        elif account == '0':
+                        elif account == 0:
+                                connection.close()
                                 exit()
                         elif account in range(1,len(query)+1):
                                 customerSummaryReport(query[account-1][1])
+                                break
         #Summary report managers
         elif(option == '3'): 
                 #selects details of each desired manager
@@ -211,12 +218,13 @@ def supervisor(user_id):
                 query = cursor.fetchall()
                 #prints each manager with details
                 for i in range(0,len(query)):
-                        print("\nAccount Manager: "+query[i][0]+"\nTotal Number of Service Agreements: "+str(query[i][1])+"\nSum of prices: $"+str(query[i][2])+"\nSum of internal costs: $"+str(query[i][3])+"\n")
+                        print("\nAccount Manager: "+query[i][0]+"\nTotal Number of Service Agreements: "+str(query[i][1])+"\nSum of prices: $"+str(round(query[i][2],2))+"\nSum of internal costs: $"+str(round(query[i][3],2))+"\n")
         #goes to main menu
         elif(option == '4'):
                 main_interface()
         #exits program
         elif(option == '0'):
+                connection.close()
                 exit()
         #calls itself
         supervisor(user_id)
