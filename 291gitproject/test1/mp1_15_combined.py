@@ -412,7 +412,7 @@ def driver(user_id):
             print("invalid date format")
             driver(user_id)
             return
-        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) > strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
+        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) >= strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
         end_date_check = cursor.fetchone()[0]
         if end_date_check != 1:
             print("end date need to be larger than start date!")
