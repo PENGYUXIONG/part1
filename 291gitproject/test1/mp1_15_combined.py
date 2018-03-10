@@ -72,8 +72,11 @@ def createMasterAccount(manager):
         account[4] = input("Enter customer type: ")
         while date_check(account[5]) == False:
                 account[5] = input("Enter start date (YYYY-MM-DD): ")
+                
         while date_check(account[6]) == False or time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
                 account[6] = input("Enter end date (YYYY-MM-DD): ")
+                if time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
+                        print("The end date must come after the start date.")
         while float_check(account[7]) == False:
                 account[7] = input("Enter total amount of the services customer has with company: ")
         cursor.execute('Insert into accounts values (?, ?, ?, ?, ?, ?, ?, ?);',account)
@@ -421,7 +424,7 @@ def driver(user_id):
             print("invalid date format")
             driver(user_id)
             return
-        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) > strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
+        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) >= strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
         end_date_check = cursor.fetchone()[0]
         if end_date_check != 1:
             print("end date need to be larger than start date!")
