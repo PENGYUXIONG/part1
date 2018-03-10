@@ -32,7 +32,7 @@ def connect(path):
 
         return
 
-def date(text):
+def date_check(text):
         try:
                 datetime.datetime.strptime(text, '%Y-%m-%d')
                 return True
@@ -319,18 +319,18 @@ def dispatcher(user_id):
 def driver(user_id):
     # get date range from the input
         Start_date = input("Please input the start date for that search with correct form (yyyy-mm-dd): ")
-        if date(Start_date) == False:
+        if date_check(Start_date) == False:
             print("invalid date format")
             driver(user_id)
             return
         End_date = input("Please input the end date for that search with correct form (yyyy-mm-dd): ")
-        if date(End_date) == False:
+        if date_check(End_date) == False:
             print("invalid date format")
             driver(user_id)
             return
         cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) > strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
-        date_check = cursor.fetchone()[0]
-        if date_check != 1:
+        end_date_check = cursor.fetchone()[0]
+        if end_date_check != 1:
             print("end date need to be larger than start date!")
             driver(user_id)
             return

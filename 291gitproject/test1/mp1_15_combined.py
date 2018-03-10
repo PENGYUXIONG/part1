@@ -1,6 +1,7 @@
 import sqlite3
 import getpass
 import datetime
+import time
 from hashlib import pbkdf2_hmac 
 connection = None
 cursor = None
@@ -71,8 +72,11 @@ def createMasterAccount(manager):
         account[4] = input("Enter customer type: ")
         while date_check(account[5]) == False:
                 account[5] = input("Enter start date (YYYY-MM-DD): ")
-        while date_check(account[6]) == False:
+                
+        while date_check(account[6]) == False or time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
                 account[6] = input("Enter end date (YYYY-MM-DD): ")
+                if time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
+                        print("The end date must come after the start date.")
         while float_check(account[7]) == False:
                 account[7] = input("Enter total amount of the services customer has with company: ")
         cursor.execute('Insert into accounts values (?, ?, ?, ?, ?, ?, ?, ?);',account)
@@ -90,11 +94,11 @@ def customerSummaryReport(customer):
         for i in range(0,len(types)):
                 for j in range(0,len(types[i])):
                         s.add(types[i][j])
-        if type(info[1]) != int:
+        if info[1] == None:
                 info[1] = 0
-        if type(info[2]) != int:
+        if info[2] == None:
                 info[2] = 0
-        print("Total number of service agreements: "+str(info[0])+"\nSum of prices: $"+str(info[1])+"\nSum of costs: $"+str(info[2])+"\nTypes: "+", ".join(s)+"\n")
+        print("Total number of service agreements: "+str(info[0])+"\nSum of prices: $"+str(round(info[1],2))+"\nSum of costs: $"+str(round(info[2],2))+"\nTypes: "+", ".join(s)+"\n")
         return
 
 def listCustomers(manager_id):
@@ -114,6 +118,7 @@ def listCustomers(manager_id):
                         return query[option-1][0]
                 #exits
                 elif option == 0:
+                        connection.close()
                         exit()
 
 def accountManager(user_id):
@@ -142,7 +147,17 @@ def accountManager(user_id):
                 else:
                         service_no = int(service_no) + 1
                 location = input("Enter location: ")
+                cursor.execute("Select * from waste_types")
+                query = cursor.fetchall()
+                waste_types = []
+                for i in range(0,len(query)):
+                        waste_types.append(query[i][0])
+                print("Valid waste types - "+", ".join(waste_types))
                 waste = input("Enter waste type: ")
+                while True:
+                        if waste in waste_types:
+                                break
+                        waste = input("Please enter a valid waste type: ")
                 pick_up = input("Enter pick up schedule: ")
                 contact = input("Enter local contact: ")
                 cost = ''
@@ -161,6 +176,7 @@ def accountManager(user_id):
                 main_interface()
         #exit program
         elif(option == '0'):
+                connection.close()
                 exit()
         #calls itself
         accountManager(user_id)
@@ -173,16 +189,41 @@ def supervisor(user_id):
                 cursor.execute("Select p.name, p.pid from personnel p, account_managers a where p.supervisor_pid =:supervisor and p.pid = a.pid",{"supervisor":user_id})
                 managers = cursor.fetchall()
                 for i,j in enumerate(managers):
-                        print(str(i+1)+". "+j[0]+" ("+j[1]+")\n")
-                createMasterAccount(input("Select manager: "))
+                        print("\n"+str(i+1)+". "+j[0]+" ("+j[1]+")")
+                print(str(len(managers)+1)+": Cancel\n0: Exit")
+                manager = ''
+                while True:
+                        while int_check(manager) == False:
+                                manager = input("Select manager: ")
+                        if manager == str(len(managers)+1):
+                                supervisor(user_id)
+                        elif manager == '0': 
+                                connection.close()
+                                exit()
+                        elif int(manager) in range(1,len(managers)+1):
+                                createMasterAccount(managers[int(manager)-1][1])
+                                break
         #Summary Report single customer
         elif(option == '2'):
                 #calls each customer where the supervisor id matches
                 cursor.execute("Select customer_name, account_no from accounts, personnel where account_mgr = pid and supervisor_pid = :user_id",{"user_id":user_id})
                 query = cursor.fetchall()
                 for i in range(0,len(query)):
-                        print(query[i][0])
-                        customerSummaryReport(query[i][1])
+                        print(str(i+1)+": "+query[i][0])
+                print(str(len(query)+1)+": Cancel\n0: Exit")
+                while True:
+                        account = ''
+                        while int_check(account) == False:
+                                account = input("Select account: ") 
+                        account = int(account)
+                        if account == len(query)+1:
+                                supervisor(user_id)
+                        elif account == 0:
+                                connection.close()
+                                exit()
+                        elif account in range(1,len(query)+1):
+                                customerSummaryReport(query[account-1][1])
+                                break
         #Summary report managers
         elif(option == '3'): 
                 #selects details of each desired manager
@@ -190,12 +231,13 @@ def supervisor(user_id):
                 query = cursor.fetchall()
                 #prints each manager with details
                 for i in range(0,len(query)):
-                        print("\nAccount Manager: "+query[i][0]+"\nTotal Number of Service Agreements: "+str(query[i][1])+"\nSum of prices: $"+str(query[i][2])+"\nSum of internal costs: $"+str(query[i][3])+"\n")
+                        print("\nAccount Manager: "+query[i][0]+"\nTotal Number of Service Agreements: "+str(query[i][1])+"\nSum of prices: $"+str(round(query[i][2],2))+"\nSum of internal costs: $"+str(round(query[i][3],2))+"\n")
         #goes to main menu
         elif(option == '4'):
                 main_interface()
         #exits program
         elif(option == '0'):
+                connection.close()
                 exit()
         #calls itself
         supervisor(user_id)
@@ -342,7 +384,7 @@ def dispatcher(user_id):
                         
                         while(True):
                                 date = input("Enter in the date in the form YYYY-MM-DD: ").replace(" ","")
-                                if(len(date) != 10 or date[4] != "-" or date[7] != "-" or not date.replace("-","").isdigit() ):
+                                if(not date_check(date)):
                                         print("The date is not in format")
                                 else:
                                         break
@@ -362,19 +404,21 @@ def dispatcher(user_id):
                         print("Please select option. \n")
 
 def driver(user_id):
-    # get date range from the input
+        # get date range from the input
         Start_date = input("Please input the start date for that search with correct form (yyyy-mm-dd): ")
-        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"start":Start_date})
-        Sdate = cursor.fetchone()[0]
-        if Sdate == None:
+        if date_check(Start_date) == False:
             print("invalid date format")
             driver(user_id)
             return
         End_date = input("Please input the end date for that search with correct form (yyyy-mm-dd): ")
-        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date)", {"End_date":End_date})
-        Edate = cursor.fetchone()[0]
-        if Edate == None:
+        if date_check(End_date) == False:
             print("invalid date format")
+            driver(user_id)
+            return
+        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) >= strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
+        end_date_check = cursor.fetchone()[0]
+        if end_date_check != 1:
+            print("end date need to be larger than start date!")
             driver(user_id)
             return
         cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
