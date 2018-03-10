@@ -23,7 +23,7 @@ def connect(path):
         #Create and populate table is the database using 'init.sql' (from eclass)
         
 
-        #cursor.execute(' PRAGMA foreign_keys=ON; ')
+        cursor.execute(' PRAGMA foreign_keys=ON; ')
         print("Importing table ... ", end = '')
         sqlcommand = open("table.sql").read()
         cursor.executescript(sqlcommand)
