@@ -188,7 +188,7 @@ def supervisor(user_id):
                                 connection.close()
                                 exit()
                         elif int(manager) in range(1,len(managers)+1):
-                                createMasterAccount(manager)
+                                createMasterAccount(managers[int(manager)-1][1])
                                 break
         #Summary Report single customer
         elif(option == '2'):
