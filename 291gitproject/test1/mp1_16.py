@@ -300,13 +300,13 @@ def dispatcher(user_id):
                                 print("The driver's truck being select.")
                         else:   
                                 #Show list of aviliabe trucks
-                                        query3 = '''SELECT truck_id from trucks 
-                                                WHERE truck_id not in 
-                                                (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''
-                                        truckList = cursor.execute(query3).fetchall()
-                                        print('Truck id')
-                                        for row in truckList:
-                                                print(row[0])
+                                query3 = '''SELECT truck_id from trucks 
+                                        WHERE truck_id not in 
+                                        (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''
+                                truckList = cursor.execute(query3).fetchall()
+                                print('Truck id')
+                                for row in truckList:
+                                        print(row[0])
 
                                 while(True):
                                         #Make sure input exists in database
