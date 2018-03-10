@@ -144,7 +144,11 @@ def accountManager(user_id):
                 else:
                         service_no = int(service_no) + 1
                 location = input("Enter location: ")
+                cursor.execute("Select * from waste_types")
+                waste_types = cursor.fetchall()[0]
                 waste = input("Enter waste type: ")
+                while waste not in waste_types:
+                        waste = input("Please enter a valid waste type: ")
                 pick_up = input("Enter pick up schedule: ")
                 contact = input("Enter local contact: ")
                 cost = ''
