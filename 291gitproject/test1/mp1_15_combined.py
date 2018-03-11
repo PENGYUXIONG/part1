@@ -3,6 +3,7 @@ import getpass
 import datetime
 import time
 from hashlib import pbkdf2_hmac
+from os.path import isfile, getsize
 connection = None
 cursor = None
 hash_name = 'sha256'
@@ -25,8 +26,9 @@ def connect(path):
 
         cursor.execute(' PRAGMA foreign_keys=ON; ')
         print("Importing table ... ", end = '')
-        sqlcommand = open("table.sql").read()
-        cursor.executescript(sqlcommand)
+        if isfile("mp1.db") == False or getsize("mp1.db") < 100:
+            sqlcommand = open("table.sql").read()
+            cursor.executescript(sqlcommand)
         connection.commit()
         print("Done \n")
 
@@ -456,6 +458,7 @@ def driver(user_id):
 
 def validate_new_account():
     global connection, cursor
+    # check if the pid is inside personnel, if not stop and ask for valid pid
     user_pid = input('''Please enter the pid: ''')
 
     cursor.execute('''
@@ -467,6 +470,7 @@ def validate_new_account():
                     ''', {'uid': user_pid})
     user_id = cursor.fetchone()
 
+    # pid not valid
     if user_id == None:
         print("Invalid pid")
         add_login_account()
@@ -477,18 +481,19 @@ def validate_new_account():
                     , {'uid': user_pid})
     user_id = cursor.fetchone()
 
+    # pid already exist inside the databse
     if user_id != None:
         print("Account already exist")
         login()
-
+    # check the role
     role = input('''Select role: \n1. Account Manager \n2. Driver \n3. Supervisor\n4. Dispatcher\n5: Cancel\n0: Exit\n''')
-
+    # go to the main
     if role == 5:
         main_interface()
-
+    # exit
     if role == 0:
         exit()
-
+    # check account_managers
     if role == '1':
         cursor.execute('''SELECT pid FROM account_managers WHERE pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -496,7 +501,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Account Manager"
-
+    # check driver
     if role == '2':
         cursor.execute('''SELECT pid FROM drivers WHERE pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -504,7 +509,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Driver"
-
+    # check supervisor
     if role == '3':
         cursor.execute('''SELECT supervisor_pid FROM personnel WHERE supervisor_pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -512,7 +517,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Supervisor"
-
+    # check for dispatcher pid
     if role == '4':
         cursor.execute('''
         SELECT pid
@@ -533,6 +538,7 @@ def validate_new_account():
 
 def login_check(user_pid, role):
     global connection, cursor
+    # check if the new login already exist in the database
     newlogin = input("Create Login: ")
     user = [user_pid, role, newlogin, 0]
     cursor.execute("SELECT login FROM users WHERE login = :nl", {'nl': newlogin})
@@ -543,6 +549,7 @@ def add_login_account():
     global connection, cursor, hash_name, salt, iterations
     user_pid, role = validate_new_account()
     user, user_check = login_check(user_pid, role)
+    # if the login alreay exist let user go the the log in
     while user_check != None:
         print("Login already exists!\n")
         user, user_check = login_check(user_pid, role)
@@ -551,7 +558,7 @@ def add_login_account():
     password = input("Create password: ")
     dk = pbkdf2_hmac(hash_name, bytearray(password, 'ascii'), bytearray(salt, 'ascii'), iterations)
     user[3] = dk
-    print(user)
+    # insert the new value into user
     cursor.execute('Insert into users values (?, ?, ?, ?);', user)
     connection.commit()
     print("Success!\n Please log in with your Login and password")
@@ -573,7 +580,9 @@ def login():
                     {'l':login, 'pw':dk})
     # check the role of the user
     id_role = cursor.fetchone()
+    # add one for the counter
     count = count + 1
+    # if the counter equal to three, exit the program
     if count == 3:
         exit()
     if id_role == None:
