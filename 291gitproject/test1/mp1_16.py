@@ -2,6 +2,7 @@ import sqlite3
 import getpass
 import datetime
 import time
+import os.path
 from hashlib import pbkdf2_hmac 
 connection = None
 cursor = None
@@ -14,6 +15,7 @@ def connect(path):
 
         #Initialize the global variable 'connection' with a connection to the dadabase specified by 'path'
         print("Making connection to database ... ", end = '')
+        old_file_exists = os.path.exists(path)
         connection = sqlite3.connect(path)
         print('Done')
         #Initialize the global variable 'cursor' with a cursor to the database you just connected
@@ -25,13 +27,17 @@ def connect(path):
 
         cursor.execute(' PRAGMA foreign_keys=ON; ')
         print("Importing table ... ", end = '')
-        sqlcommand = open("table.sql").read()
-        cursor.executescript(sqlcommand)
+        #if no previous db was in directory
+        if old_file_exists == False:
+                sqlcommand = open("table.sql").read()
+                cursor.executescript(sqlcommand)
+                insertUser();  
         connection.commit()
         print("Done \n")
 
         return
 
+#checks integers are in right format
 def int_check(i):
         try:
                 i = int(i)
@@ -39,13 +45,14 @@ def int_check(i):
         except ValueError:
                 return False
 
+#checks dates are in right format
 def date_check(text):
         try:
                 datetime.datetime.strptime(text, '%Y-%m-%d')
                 return True
         except ValueError:
                 return False        
-        
+#checks money is in right format        
 def float_check(price):
         try:
                 price = float(price)
@@ -260,16 +267,16 @@ def dispatcher(user_id):
                                 print(index,'|',row[0],'|',row[1])
                                 index += 1
 
-                
+
                         #Select service index
-                        #Make sure input exists in list 
+                        #Make sure input exists in list
                         while(True):
                                 slct_Service_Index = int(input("Select a service agreement (Index) from above: "))
                                 if(slct_Service_Index >= len(serviceList) or slct_Service_Index < 0):
                                         print("This is not an existing index, please try another one. \n")
                                 else:
                                         break
-                        
+
                         query = "SELECT * from service_agreements where service_no = ? and master_account = ?"
                         slctService = cursor.execute(query,(serviceList[ slct_Service_Index][0],serviceList[ slct_Service_Index][1],)).fetchone()
 
@@ -284,7 +291,7 @@ def dispatcher(user_id):
 
                         #Select driver
                         query = "SELECT * from drivers where pid = ?"
-                        #Make sure input exists in database 
+                        #Make sure input exists in database
                         while(True):
                                 slct_Driver_Id = input("Select a driver (id): ")
                                 slctDriver = cursor.execute(query,(slct_Driver_Id,)).fetchall()
@@ -298,33 +305,33 @@ def dispatcher(user_id):
                         if(slctDriver[0][2] != None):
                                 slctTruck = cursor.execute(query,(slctDriver[0][2],)).fetchall()
                                 print("The driver's truck being select.")
-                        else:   
+                        else:
                                 #Show list of aviliabe trucks
-                                query3 = '''SELECT truck_id from trucks 
-                                        WHERE truck_id not in 
-                                        (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''
-                                truckList = cursor.execute(query3).fetchall()
-                                print('Truck id')
-                                for row in truckList:
-                                        print(row[0])
+                                        query3 = '''SELECT truck_id from trucks
+                                                WHERE truck_id not in
+                                                (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''
+                                        truckList = cursor.execute(query3).fetchall()
+                                        print('Truck id')
+                                        for row in truckList:
+                                                print(row[0])
 
-                                while(True):
-                                        #Make sure input exists in database
-                                        slct_Truck_Id = input("Select a truck (id): ")
-                                        slctTruck = cursor.execute(query,(slct_Truck_Id,)).fetchall()
+                        while(True):
+                                #Make sure input exists in database
+                                slct_Truck_Id = input("Select a truck (id): ")
+                                slctTruck = cursor.execute(query,(slct_Truck_Id,)).fetchall()
+                                if(len(slctTruck) != 0):
+                                        #Make sure the truck is owned by company
+                                        query2 = '''SELECT * from trucks
+                                                where truck_id = ?
+                                                and truck_id not in
+                                                (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''
+                                        slctTruck = cursor.execute(query2,(slct_Truck_Id,)).fetchall()
                                         if(len(slctTruck) != 0):
-                                                #Make sure the truck is owned by company
-                                                query2 = '''SELECT * from trucks 
-                                                        where truck_id = ?
-                                                        and truck_id not in 
-                                                        (SELECT owned_truck_id FROM drivers WHERE owned_truck_id is not null)'''                
-                                                slctTruck = cursor.execute(query2,(slct_Truck_Id,)).fetchall()
-                                                if(len(slctTruck) != 0):
-                                                        break
-                                                else:
-                                                        print("This is not a truck owned by company, please try another one. \n")
+                                                break
                                         else:
-                                                print("This is not an existing truck, please try another one. \n")
+                                                print("This is not a truck owned by company, please try another one. \n")
+                                else:
+                                        print("This is not an existing truck, please try another one. \n")
 
 
                         #Auto fill pick up container
@@ -333,13 +340,13 @@ def dispatcher(user_id):
                                 FROM containers c
                                 WHERE (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_pick_up = c.container_id)
                                 <
-                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id) 
+                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id)
                                 intersect
                                 select cid_drop_off
                                 from service_fulfillments sf, service_agreements sg
                                 where sf.service_no = sg.service_no
                                 and sg.location = ?
-                                '''                 
+                                '''
 
                         slct_Container_Id = cursor.execute(query,(slctService[2],)).fetchall()
                         if(len(slct_Container_Id) != 0):
@@ -348,7 +355,7 @@ def dispatcher(user_id):
                                 print("No container at the loacation, Dunmmy container being select. ")
                                 slct_Container_Id = [("NULLID",)]
 
-                        
+
                         #Select drop off container
                         query = '''
                                 SELECT c.container_id
@@ -361,7 +368,7 @@ def dispatcher(user_id):
                                 FROM containers c
                                 WHERE (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_pick_up = c.container_id)
                                 >
-                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id) 
+                                (SELECT MAX(date_time) FROM service_fulfillments s WHERE s.cid_drop_off = c.container_id)
                                 intersect
                                 select container_id
                                 from container_waste_types
@@ -371,7 +378,7 @@ def dispatcher(user_id):
                                 from containers
                                 where container_id = 'NULLID'
                                 '''
-                        
+
                         #Get list of container that matches waste type
                         containerList = cursor.execute(query,(slctService[3],)).fetchall()
                         #Show list if available
@@ -380,8 +387,8 @@ def dispatcher(user_id):
                                 slct_Container_Id2 = [("NULLID",)]
                         else:
                                 for row in containerList:
-                                        print(row[0]) 
-                        
+                                        print(row[0])
+
                                 query = "SELECT * from containers where container_id = ?"
                                 while(True):
                                         slct_Container_Id2 = input("Select a container (id) from list above to drop off: ")
@@ -390,7 +397,7 @@ def dispatcher(user_id):
                                         else:
                                                 print("This is not an container from list, please try another one. \n")
 
-                        
+
                         while(True):
                                 date = input("Enter in the date in the form YYYY-MM-DD: ").replace(" ","")
                                 if(not date_check(date)):
@@ -398,13 +405,13 @@ def dispatcher(user_id):
                                 else:
                                         break
 
-                        
+
                         #Create the fulfillments table
                         query = "Insert into service_fulfillments values (?,?,?,?,?,?,?)"
                         cursor.execute(query,(date,slctService[1],slctService[0],slctTruck[0][0],slct_Driver_Id,slct_Container_Id2,slct_Container_Id[0][0]))
                         connection.commit()
                         print("Table created! \n")
-                
+
                 elif(choise == '2'):
                         main_interface()
                 elif(choise == '0'):
@@ -456,6 +463,7 @@ def driver(user_id):
 
 def validate_new_account():
     global connection, cursor
+    # check if the pid is inside personnel, if not stop and ask for valid pid
     user_pid = input('''Please enter the pid: ''')
 
     cursor.execute('''
@@ -467,6 +475,7 @@ def validate_new_account():
                     ''', {'uid': user_pid})
     user_id = cursor.fetchone()
 
+    # pid not valid
     if user_id == None:
         print("Invalid pid")
         add_login_account()
@@ -477,18 +486,19 @@ def validate_new_account():
                     , {'uid': user_pid})
     user_id = cursor.fetchone()
 
+    # pid already exist inside the databse
     if user_id != None:
         print("Account already exist")
         login()
-
+    # check the role
     role = input('''Select role: \n1. Account Manager \n2. Driver \n3. Supervisor\n4. Dispatcher\n5: Cancel\n0: Exit\n''')
-
+    # go to the main
     if role == 5:
         main_interface()
-
+    # exit
     if role == 0:
         exit()
-
+    # check account_managers
     if role == '1':
         cursor.execute('''SELECT pid FROM account_managers WHERE pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -496,7 +506,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Account Manager"
-
+    # check driver
     if role == '2':
         cursor.execute('''SELECT pid FROM drivers WHERE pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -504,7 +514,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Driver"
-
+    # check supervisor
     if role == '3':
         cursor.execute('''SELECT supervisor_pid FROM personnel WHERE supervisor_pid = :user''', {'user': user_pid})
         pid = cursor.fetchone()
@@ -512,7 +522,7 @@ def validate_new_account():
             print("Role not correct, please sign up again\n")
             add_login_account()
         Role = "Supervisor"
-
+    # check for dispatcher pid
     if role == '4':
         cursor.execute('''
         SELECT pid
@@ -533,6 +543,7 @@ def validate_new_account():
 
 def login_check(user_pid, role):
     global connection, cursor
+    # check if the new login already exist in the database
     newlogin = input("Create Login: ")
     user = [user_pid, role, newlogin, 0]
     cursor.execute("SELECT login FROM users WHERE login = :nl", {'nl': newlogin})
@@ -543,15 +554,16 @@ def add_login_account():
     global connection, cursor, hash_name, salt, iterations
     user_pid, role = validate_new_account()
     user, user_check = login_check(user_pid, role)
+    # if the login alreay exist let user go the the log in
     while user_check != None:
         print("Login already exists!\n")
         user, user_check = login_check(user_pid, role)
 
-    #Encrypt password    
+    #Encrypt password
     password = input("Create password: ")
     dk = pbkdf2_hmac(hash_name, bytearray(password, 'ascii'), bytearray(salt, 'ascii'), iterations)
     user[3] = dk
-    print(user)
+    # insert the new value into user
     cursor.execute('Insert into users values (?, ?, ?, ?);', user)
     connection.commit()
     print("Success!\n Please log in with your Login and password")
@@ -560,7 +572,7 @@ def add_login_account():
     return
 
 def login():
-    global connection, cursor, hash_name, salt, iterations
+    global connection, cursor, hash_name, salt, iterations, count
     # login input
     login = input('Please enter the login: ')
     # password input
@@ -573,6 +585,11 @@ def login():
                     {'l':login, 'pw':dk})
     # check the role of the user
     id_role = cursor.fetchone()
+    # add one for the counter
+    count = count + 1
+    # if the counter equal to three, exit the program
+    if count == 3:
+        exit()
     if id_role == None:
         print("No matched login in database, please sign up")
         main_interface()
@@ -599,7 +616,7 @@ def main_interface():
         if option == '0':
                 exit()
         print("Invalid key\n")
-    return  
+    return
 
 def insertUser():
         global connection, cursor, hash_name, salt, iterations
@@ -615,10 +632,10 @@ def insertUser():
         connection.commit()
 
 def main():
-        global connection, cursor        
+        global connection, cursor, count
+        count = 0
         path="./mp1.db"
         connect(path)
-        insertUser();  
         main_interface()
         connection.close()
         return
