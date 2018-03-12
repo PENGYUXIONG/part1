@@ -25,10 +25,11 @@ def connect(path):
 
 
         cursor.execute(' PRAGMA foreign_keys=ON; ')
-        print("Importing table ... ", end = '')
-        if isfile("mp1.db") == False or getsize("mp1.db") < 100:
+        if isfile("mp1.db") == True and getsize("mp1.db") < 100:
+            print("Importing table ... ", end = '')
             sqlcommand = open("table.sql").read()
             cursor.executescript(sqlcommand)
+            insertUser();
         connection.commit()
         print("Done \n")
 
@@ -631,7 +632,6 @@ def main():
         count = 0
         path="./mp1.db"
         connect(path)
-        insertUser();
         main_interface()
         connection.close()
         return
