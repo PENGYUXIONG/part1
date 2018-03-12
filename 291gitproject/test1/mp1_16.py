@@ -26,9 +26,10 @@ def connect(path):
         
 
         cursor.execute(' PRAGMA foreign_keys=ON; ')
-        print("Importing table ... ", end = '')
+        
         #if no previous db was in directory
         if old_file_exists == False:
+                print("Importing table ... ", end = '')
                 sqlcommand = open("table.sql").read()
                 cursor.executescript(sqlcommand)
                 insertUser();  
