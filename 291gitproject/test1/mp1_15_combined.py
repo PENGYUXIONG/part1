@@ -630,7 +630,7 @@ def insertUser():
 def main():
         global connection, cursor, count
         count = 0
-        path="./mp1.db"
+        path="./mp21.db"
         connect(path)
         main_interface()
         connection.close()

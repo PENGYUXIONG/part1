@@ -252,11 +252,14 @@ def supervisor(user_id):
 
 def dispatcher(user_id):
         global connection, cursor
+        #The big loop for creating multiple tables
         while(True):
+                #Choises given to user
                 print("1: Create a service_fulfillments table. ")
                 print("2: Logout\n0: Exit")
                 choise = input("Choose what do you want to do: ")
 
+                #Create fulfillment
                 if (choise == '1'):
 
                         #List all service agreements
@@ -348,7 +351,7 @@ def dispatcher(user_id):
                                 where sf.service_no = sg.service_no
                                 and sg.location = ?
                                 '''
-
+                        #In case we got no container
                         slct_Container_Id = cursor.execute(query,(slctService[2],)).fetchall()
                         if(len(slct_Container_Id) != 0):
                                 print("Pick-up-container automatically selected. ")
@@ -398,7 +401,7 @@ def dispatcher(user_id):
                                         else:
                                                 print("This is not an container from list, please try another one. \n")
 
-
+                        #Collecting date
                         while(True):
                                 date = input("Enter in the date in the form YYYY-MM-DD: ").replace(" ","")
                                 if(not date_check(date)):
