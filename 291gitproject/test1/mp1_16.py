@@ -97,16 +97,13 @@ def customerSummaryReport(customer):
         info = list(cursor.fetchone())
         #set ensures no duplicate
         s = set()
-        cursor.execute("Select waste_type from service_agreements where master_account = :customer",{"customer":customer})
-        types = cursor.fetchall()
-        for i in range(0,len(types)):
-                for j in range(0,len(types[i])):
-                        s.add(types[i][j])
+        cursor.execute("Select count(distinct waste_type) from service_agreements where master_account = :customer",{"customer":customer})
+        number_of_types = cursor.fetchone()[0]
         if info[1] == None:
                 info[1] = 0
         if info[2] == None:
                 info[2] = 0
-        print("Total number of service agreements: "+str(info[0])+"\nSum of prices: $"+str(round(info[1],2))+"\nSum of costs: $"+str(round(info[2],2))+"\nTypes: "+", ".join(s)+"\n")
+        print("Total number of service agreements: "+str(info[0])+"\nSum of prices: $"+str(round(info[1],2))+"\nSum of costs: $"+str(round(info[2],2))+"\nNumber of Waste Types: "+str(number_of_types))
         return
 
 def listCustomers(manager_id):
