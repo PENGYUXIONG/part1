@@ -3,7 +3,7 @@ import getpass
 import datetime
 import time
 import os.path
-from hashlib import pbkdf2_hmac 
+from hashlib import pbkdf2_hmac
 connection = None
 cursor = None
 hash_name = 'sha256'
@@ -23,16 +23,16 @@ def connect(path):
         cursor = connection.cursor()
         print('Done')
         #Create and populate table is the database using 'init.sql' (from eclass)
-        
+
 
         cursor.execute(' PRAGMA foreign_keys=ON; ')
-        
+
         #if no previous db was in directory
         if old_file_exists == False:
                 print("Importing table ... ", end = '')
                 sqlcommand = open("table.sql").read()
                 cursor.executescript(sqlcommand)
-                insertUser();  
+                insertUser();
         connection.commit()
         print("Done \n")
 
@@ -52,8 +52,8 @@ def date_check(text):
                 datetime.datetime.strptime(text, '%Y-%m-%d')
                 return True
         except ValueError:
-                return False        
-#checks money is in right format        
+                return False
+#checks money is in right format
 def float_check(price):
         try:
                 price = float(price)
@@ -64,7 +64,7 @@ def float_check(price):
                 return False
         else:
                 return True
-        
+
 def createMasterAccount(manager):
         #gets info
         account = ['',manager,0,0,0,'','','']
@@ -80,7 +80,7 @@ def createMasterAccount(manager):
         account[4] = input("Enter customer type: ")
         while date_check(account[5]) == False:
                 account[5] = input("Enter start date (YYYY-MM-DD): ")
-                
+
         while date_check(account[6]) == False or time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
                 account[6] = input("Enter end date (YYYY-MM-DD): ")
                 if time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
@@ -205,7 +205,7 @@ def supervisor(user_id):
                                 manager = input("Select manager: ")
                         if manager == str(len(managers)+1):
                                 supervisor(user_id)
-                        elif manager == '0': 
+                        elif manager == '0':
                                 connection.close()
                                 exit()
                         elif int(manager) in range(1,len(managers)+1):
@@ -222,7 +222,7 @@ def supervisor(user_id):
                 while True:
                         account = ''
                         while int_check(account) == False:
-                                account = input("Select account: ") 
+                                account = input("Select account: ")
                         account = int(account)
                         if account == len(query)+1:
                                 supervisor(user_id)
@@ -233,7 +233,7 @@ def supervisor(user_id):
                                 customerSummaryReport(query[account-1][1])
                                 break
         #Summary report managers
-        elif(option == '3'): 
+        elif(option == '3'):
                 #selects details of each desired manager
                 cursor.execute("Select name,count(service_no), sum(internal_cost) as c, sum(price) as p from service_agreements, accounts, personnel where (master_account  = account_no) and (account_mgr = pid) and (supervisor_pid = :user_id) group by name order by (p-c)",{"user_id":user_id})
                 query = cursor.fetchall()
@@ -589,12 +589,12 @@ def login():
                     {'l':login, 'pw':dk})
     # check the role of the user
     id_role = cursor.fetchone()
-    # add one for the counter
-    count = count + 1
-    # if the counter equal to three, exit the program
-    if count == 3:
-        exit()
     if id_role == None:
+        # add one for the counter
+        count = count + 1
+        # if the counter equal to three, exit the program
+        if count == 3:
+          exit()
         print("No matched login in database, please sign up")
         main_interface()
     if(id_role[1] == 'Account Manager'):
@@ -605,7 +605,6 @@ def login():
       dispatcher(id_role[0])
     if(id_role[1] == 'Driver'):
       driver(id_role[0])
-
     return
 
 def main_interface():
