@@ -421,47 +421,64 @@ def dispatcher(user_id):
                         print("Please select option. \n")
 
 def driver(user_id):
-        # get date range from the input
-        Start_date = input("Please input the start date for that search with correct form (yyyy-mm-dd): ")
-        if date_check(Start_date) == False:
-            print("invalid date format")
-            driver(user_id)
-            return
-        End_date = input("Please input the end date for that search with correct form (yyyy-mm-dd): ")
-        if date_check(End_date) == False:
-            print("invalid date format")
-            driver(user_id)
-            return
-        cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) >= strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
-        end_date_check = cursor.fetchone()[0]
-        if end_date_check != 1:
-            print("end date need to be larger than start date!")
-            driver(user_id)
-            return
-        cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
-                    sf.cid_drop_off, sf.cid_pick_up
-                    FROM service_agreements sa, service_fulfillments sf
-                    WHERE sa.master_account = sf.master_account
-                    and
-                    sa.service_no = sf.service_no
-                    and
-                    strftime('%Y-%m-%d %H:%M:%S.%f', :start) < sf.date_time
-                    and
-                     sf.date_time < strftime('%Y-%m-%d %H:%M:%S.%f', :End_date)
-                    and
-                    sf.driver_id = :id''', {"id":user_id, "start":Start_date, "End_date":End_date})
-        # get all informations of the qualified tours
-        informations = cursor.fetchall()
-        for inf in informations:
-                # print information
-                print("\n" + "Location: " + inf[0])
-                print("contact information: " + inf[1])
-                print("waste type: " + inf[2])
-                print("drop_off container id: " + inf[3])
-                print("pick_up container_id: " + inf[4])
-        print("\n")
-        main_interface()
-
+        # list tasks menu
+        cursor.execute("SELECT service_no, date_time FROM service_fulfillments WHERE driver_id = :user", {"user":user_id})
+        tasks = cursor.fetchall()
+        for task in tasks:
+            print("\n" + "service number:" + task[0])
+            print("date:" + task[1])
+        print("\n" + "1:select task inside custumize date range\n2:cancel\n0:exit")
+        # get what user want to do
+        choice = input()
+        # select task through input date range
+        if choice == "1":
+            # get date range from the input
+            Start_date = input("Please input the start date for that search with correct form (yyyy-mm-dd): ")
+            if date_check(Start_date) == False:
+                print("invalid date format")
+                driver(user_id)
+                return
+            End_date = input("Please input the end date for that search with correct form (yyyy-mm-dd): ")
+            if date_check(End_date) == False:
+                print("invalid date format")
+                driver(user_id)
+                return
+            cursor.execute("SELECT strftime('%Y-%m-%d %H:%M:%S.%f', :End_date) >= strftime('%Y-%m-%d %H:%M:%S.%f', :start)", {"End_date":End_date, "start":Start_date})
+            end_date_check = cursor.fetchone()[0]
+            if end_date_check != 1:
+                print("end date need to be larger than start date!")
+                driver(user_id)
+                return
+            cursor.execute('''SELECT sa.location, sa.local_contact, sa.waste_type,
+                        sf.cid_drop_off, sf.cid_pick_up, sf.service_no
+                        FROM service_agreements sa, service_fulfillments sf
+                        WHERE sa.master_account = sf.master_account
+                        and
+                        sa.service_no = sf.service_no
+                        and
+                        strftime('%Y-%m-%d %H:%M:%S.%f', :start) < sf.date_time
+                        and
+                         sf.date_time < strftime('%Y-%m-%d %H:%M:%S.%f', :End_date)
+                        and
+                        sf.driver_id = :id''', {"id":user_id, "start":Start_date, "End_date":End_date})
+            # get all informations of the qualified tours
+            informations = cursor.fetchall()
+            for inf in informations:
+                    # print information
+                    print("\n" + "service_no:" + inf[5])
+                    print("Location: " + inf[0])
+                    print("contact information: " + inf[1])
+                    print("waste type: " + inf[2])
+                    print("drop_off container id: " + inf[3])
+                    print("pick_up container_id: " + inf[4])
+            print("\n")
+            main_interface()
+        # go to main
+        if choice == "2":
+            main_interface()
+        # exit
+        if choice == "0":
+            exit()
 def validate_new_account():
     global connection, cursor
     # check if the pid is inside personnel, if not stop and ask for valid pid
