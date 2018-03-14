@@ -78,9 +78,11 @@ def createMasterAccount(manager):
         account[2] = input("Enter customer name: ")
         account[3] = input("Enter customer info.: ")
         account[4] = input("Enter customer type: ")
+        #makes sure date is in correct format
         while date_check(account[6]) == False and date_check(account[5]) == False:
                 account[5] = input("Enter start date (YYYY-MM-DD): ")
                 account[6] = input("Enter end date (YYYY-MM-DD): ")
+                #makes sure end date is not earlier than start
                 if time.strptime(account[5], "%Y-%m-%d") > time.strptime(account[6], "%Y-%m-%d"):
                         print("The end date must come after the start date.")
                         account[5] = ''
@@ -96,7 +98,6 @@ def customerSummaryReport(customer):
         cursor.execute("Select count(*),sum(price),sum(internal_cost),waste_type from service_agreements where master_account = :customer",{"customer":customer})
         info = list(cursor.fetchone())
         #set ensures no duplicate
-        s = set()
         cursor.execute("Select count(distinct waste_type) from service_agreements where master_account = :customer",{"customer":customer})
         number_of_types = cursor.fetchone()[0]
         if info[1] == None:
@@ -110,6 +111,7 @@ def listCustomers(manager_id):
         #finds customer with correct manager
         cursor.execute("Select account_no, customer_name from accounts where account_mgr =:id",{"id":manager_id})
         query = cursor.fetchall()
+        #prints out customers
         for i,j in enumerate(query):
                 print(str(i+1)+". "+j[1]+" ("+j[0]+")")
         print(str(len(query)+1)+": Cancel\n0: Exit")
@@ -128,16 +130,21 @@ def listCustomers(manager_id):
 
 def accountManager(user_id):
         option =input("1: Select customer (master account)\n2: Create new master account\n3: Add new service agreement\n4: Create summary report for a single customer\n5: Logout\n0: Exit\n")
+        #selects customer
         if(option == '1'):
                 customer = listCustomers(user_id)
+                #finds master account
                 cursor.execute("Select * from accounts where account_no =:customer",{"customer":customer})
                 query = cursor.fetchone()
+                #prints details of master account
                 print("\nAccount No.: "+str(query[0])+"\nAccount Mgr.: "+str(query[1])+"\nName: "+str(query[2])+"\nContact Info.: "+str(query[3])+"\nCustomer Type: "+str(query[4])+"\nStart Date: "+str(query[5])+"\nEnd Date: "+str(query[6])+"\nTotal Amount: $"+str(query[7])+"\n")
+                #finds service agreements
                 cursor.execute("Select * from service_agreements where master_account =:customer order by service_no",{"customer":customer})
                 query = cursor.fetchall()
+                #prints details of each service agreement for account
                 for i in query:
                         print("Service No.: "+i[0]+"\nMaster Account: "+i[1]+"\nLocation: "+i[2]+"\nWaste Type: "+i[3]+"\nPick Up Schedule: "+i[4]+"\nLocal Contact: "+i[5]+"\nInternal Cost: $"+str(i[6])+"\nPrice: $"+str(i[7])+"\n")
-
+        #creates new master account
         elif (option == '2'):
                 createMasterAccount(user_id)
         #new service agreement
@@ -147,18 +154,22 @@ def accountManager(user_id):
                 #find max service number from service agreements ith respective customer then adds 1 -> ensuring service no is unique
                 cursor.execute("Select max(service_no) from service_agreements where master_account = :account_no",{"account_no":customer})
                 service_no = cursor.fetchone()[0]
+                #sets service agreement to 1 if there is no service agreement for the account
                 if(service_no == None):
                         service_no = 1
+                #if a previous service agreement exists, sets service_no to max + 1 to ensure uniqueness
                 else:
                         service_no = int(service_no) + 1
                 location = input("Enter location: ")
                 cursor.execute("Select * from waste_types")
                 query = cursor.fetchall()
                 waste_types = []
+                #prints out waste types
                 for i in range(0,len(query)):
                         waste_types.append(query[i][0])
                 print("Valid waste types - "+", ".join(waste_types))
                 waste = input("Enter waste type: ")
+                #forces user to enter a valid waste type
                 while True:
                         if waste in waste_types:
                                 break
@@ -198,6 +209,7 @@ def supervisor(user_id):
                 print(str(len(managers)+1)+": Cancel\n0: Exit")
                 manager = ''
                 while True:
+                        #forces user to select manger, cancel or exit
                         while int_check(manager) == False:
                                 manager = input("Select manager: ")
                         if manager == str(len(managers)+1):
@@ -218,6 +230,7 @@ def supervisor(user_id):
                 print(str(len(query)+1)+": Cancel\n0: Exit")
                 while True:
                         account = ''
+                        #forces user to select account, cancel or exit
                         while int_check(account) == False:
                                 account = input("Select account: ")
                         account = int(account)
